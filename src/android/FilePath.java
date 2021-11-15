@@ -342,6 +342,9 @@ public class FilePath extends CordovaPlugin {
 
         // DocumentProvider
         if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                return copyFileToInternalStorage(context, uri);
+            }
             // ExternalStorageProvider
             if (isExternalStorageDocument(uri)) {
                 final String docId = DocumentsContract.getDocumentId(uri);
@@ -419,6 +422,9 @@ public class FilePath extends CordovaPlugin {
                 } else if ("audio".equals(type)) {
                     contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                 } else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        return copyFileToInternalStorage(context, uri);
+                    }
                     contentUri = MediaStore.Files.getContentUri("external");
                 }
 
@@ -501,4 +507,54 @@ public class FilePath extends CordovaPlugin {
         }
         return file.getPath();
     }
+
+    private static String copyFileToInternalStorage(final Context context, Uri uri) {
+
+        Cursor returnCursor = context.getContentResolver().query(uri, new String[]{
+                OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE
+        }, null, null, null);
+
+
+        /*
+         * Get the column indexes of the data in the Cursor,
+         *     * move to the first row in the Cursor, get the data,
+         *     * and display it.
+         * */
+        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+        returnCursor.moveToFirst();
+        String name = (returnCursor.getString(nameIndex));
+
+        final String dirPath = context.getCacheDir().getPath() + "/tmp";
+        File dir = new File(dirPath);
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+
+        File output = new File(dirPath + "/" + name);
+        Log.d(TAG, dirPath + "/" + name);
+
+        try {
+            InputStream inputStream = context.getContentResolver().openInputStream(uri);
+            FileOutputStream outputStream = new FileOutputStream(output);
+            int read;
+            int bufferSize = 1024;
+            final byte[] buffers = new byte[bufferSize];
+            while ((read = inputStream.read(buffers)) != -1) {
+                outputStream.write(buffers, 0, read);
+            }
+
+            inputStream.close();
+            outputStream.close();
+            returnCursor.close();
+
+        } catch (Exception e) {
+
+            Log.e(TAG, e.getMessage());
+        }
+
+        Log.d(TAG, "OUTPUT: " + output.getPath());
+
+        return output.getPath();
+    }
+
 }
