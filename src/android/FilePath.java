@@ -508,6 +508,16 @@ public class FilePath extends CordovaPlugin {
         return file.getPath();
     }
 
+    private static String getExtensionByStringHandling(String filename) {
+
+        if(filename.contains(".")){
+            return filename.substring(filename.lastIndexOf(".") + 1);
+        }else{
+            return "";
+        }
+
+    }
+
     private static String copyFileToInternalStorage(final Context context, Uri uri) {
 
         Cursor returnCursor = context.getContentResolver().query(uri, new String[]{
@@ -529,6 +539,10 @@ public class FilePath extends CordovaPlugin {
         if (!dir.exists()) {
             dir.mkdir();
         }
+
+        String fileExtension = this.getExtensionByStringHandling(name);
+
+        name = "TempFile"+System.currentTimeMillis()+fileExtension;
 
         File output = new File(dirPath + "/" + name);
         Log.d(TAG, dirPath + "/" + name);
