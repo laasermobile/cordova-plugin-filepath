@@ -540,7 +540,7 @@ public class FilePath extends CordovaPlugin {
             dir.mkdir();
         }
 
-        String fileExtension = this.getExtensionByStringHandling(name);
+        String fileExtension = getExtensionByStringHandling(name);
 
         name = "TempFile"+System.currentTimeMillis()+"."+fileExtension;
 
